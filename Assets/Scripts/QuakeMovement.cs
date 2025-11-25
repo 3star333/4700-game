@@ -235,6 +235,14 @@ public class QuakeMovement : MonoBehaviour
         playerVelocity.z += wishDir.z * accelSpeed;
     }
 
+    /// <summary>
+    /// Apply an impulse to the player's current velocity, used for recoil effects / movement tech.
+    /// </summary>
+    public void AddImpulse(Vector3 impulse)
+    {
+        playerVelocity += impulse;
+    }
+
     // Debug info
     private void OnGUI()
     {
