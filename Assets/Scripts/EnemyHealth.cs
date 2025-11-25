@@ -51,7 +51,7 @@ public class EnemyHealth : MonoBehaviour
         }
 
         // Award points (you'll implement this when you have a score system)
-        // ScoreManager.Instance?.AddPoints(pointsOnKill);
+        ScoreManager.Instance?.AddPoints(pointsOnKill);
 
         // Destroy enemy
         Destroy(gameObject);

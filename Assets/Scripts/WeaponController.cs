@@ -27,6 +27,7 @@ public class WeaponController : MonoBehaviour
     private float nextFireTime = 0f;
     private Camera playerCamera;
     private bool shootInput = false;
+    private bool isUpgraded = false;
 
     private void Start()
     {
@@ -116,4 +117,24 @@ public class WeaponController : MonoBehaviour
     // Public getters for UI
     public int GetCurrentAmmo() => currentAmmo;
     public int GetMaxAmmo() => maxAmmo;
+
+    // Apply a Pack-A-Punch style upgrade to this weapon (increase damage/other stats)
+    public void ApplyPackAPunch(float damageMultiplier = 2f)
+    {
+        if (isUpgraded) return;
+        damage *= damageMultiplier;
+        isUpgraded = true;
+        Debug.Log($"Weapon upgraded by Pack-A-Punch! New damage: {damage}");
+    }
+
+    public bool IsUpgraded() => isUpgraded;
+
+    /// <summary>
+    /// Modify damage immediately, used for perks like double damage.
+    /// </summary>
+    public void ModifyDamage(float multiplier)
+    {
+        damage *= multiplier;
+        Debug.Log($"Weapon damage modified. New damage: {damage}");
+    }
 }
