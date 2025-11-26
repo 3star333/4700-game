@@ -22,6 +22,16 @@ public class EnemyHealth : MonoBehaviour
         currentHealth = maxHealth;
     }
 
+    /// <summary>
+    /// Multiply max and current health by the provided scale (called by spawner/round manager).
+    /// </summary>
+    public void ScaleHealth(float scale)
+    {
+        if (scale <= 0f) return;
+        maxHealth *= scale;
+        currentHealth = Mathf.Min(currentHealth * scale, maxHealth);
+    }
+
     public void TakeDamage(float damage)
     {
         currentHealth -= damage;
@@ -61,4 +71,7 @@ public class EnemyHealth : MonoBehaviour
     {
         return currentHealth / maxHealth;
     }
+
+    public float GetCurrentHealth() => currentHealth;
+    public float GetMaxHealth() => maxHealth;
 }
