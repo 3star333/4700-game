@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class BatWithNails : BaseWeapon
+public class BatWithNails : MeleeWeapon
 {
     [Header("Melee Settings")]
     public MeleeHitbox hitbox;
@@ -14,7 +14,6 @@ public class BatWithNails : BaseWeapon
         nextFireTime = Time.time + fireRate;
 
         if (hitbox == null) return;
-
         hitbox.PerformMelee(damage, (hitObj) =>
         {
             var eh = hitObj.GetComponent<EnemyHealth>();

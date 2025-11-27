@@ -8,10 +8,10 @@ using UnityEngine;
 public class WeaponManager : MonoBehaviour
 {
     [SerializeField] private Transform weaponMount;
-    private List<BaseWeapon> ownedWeapons = new List<BaseWeapon>();
+    private List<Weapon> ownedWeapons = new List<Weapon>();
     private int currentIndex = -1;
 
-    public BaseWeapon CurrentWeapon => currentIndex >= 0 && currentIndex < ownedWeapons.Count ? ownedWeapons[currentIndex] : null;
+    public Weapon CurrentWeapon => currentIndex >= 0 && currentIndex < ownedWeapons.Count ? ownedWeapons[currentIndex] : null;
 
     public void AddWeapon(GameObject weaponPrefab)
     {
@@ -20,7 +20,7 @@ public class WeaponManager : MonoBehaviour
         newWeapon.transform.localPosition = Vector3.zero;
         newWeapon.transform.localRotation = Quaternion.identity;
 
-        BaseWeapon baseWeapon = newWeapon.GetComponent<BaseWeapon>();
+        Weapon baseWeapon = newWeapon.GetComponent<Weapon>();
         if (baseWeapon != null)
         {
             ownedWeapons.Add(baseWeapon);
@@ -36,7 +36,7 @@ public class WeaponManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Added weapon prefab missing a BaseWeapon component");
+            Debug.LogWarning("Added weapon prefab missing a Weapon component");
             Destroy(newWeapon);
         }
     }
@@ -68,7 +68,7 @@ public class WeaponManager : MonoBehaviour
         }
     }
 
-    public void AddOwnedWeapon(BaseWeapon w)
+    public void AddOwnedWeapon(Weapon w)
     {
         if (w == null) return;
         ownedWeapons.Add(w);

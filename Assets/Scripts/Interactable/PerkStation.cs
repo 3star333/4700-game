@@ -33,7 +33,7 @@ public class PerkStation : MonoBehaviour, IInteractable
         {
             case PerkType.DoubleDamage:
             {
-                BaseWeapon bw = interactor.GetComponentInChildren<BaseWeapon>();
+                Weapon bw = interactor.GetComponentInChildren<Weapon>();
                 if (bw != null)
                 {
                     bw.ModifyDamage(multiplier);

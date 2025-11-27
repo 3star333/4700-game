@@ -26,7 +26,7 @@ public class PackAPunch : MonoBehaviour, IInteractable
         // Find the player's WeaponController and apply upgrade
         // Try WeaponManager first
         WeaponManager wm = interactor.GetComponent<WeaponManager>();
-        if (wm != null && wm != null)
+        if (wm != null)
         {
             wm.ApplyPackAPunchToCurrent(damageMultiplier);
             used = true;
@@ -34,7 +34,7 @@ public class PackAPunch : MonoBehaviour, IInteractable
             return true;
         }
 
-        BaseWeapon bw = interactor.GetComponentInChildren<BaseWeapon>();
+        Weapon bw = interactor.GetComponentInChildren<Weapon>();
         if (bw != null)
         {
             bw.ApplyPackAPunch(damageMultiplier);

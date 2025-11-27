@@ -5,17 +5,14 @@ using UnityEngine.InputSystem;
 /// Basic weapon controller for shooting mechanics.
 /// Attach to the player's camera or a weapon object.
 /// </summary>
-public class WeaponController : BaseWeapon
+public class WeaponController : RangedWeapon
 {
     [Header("Weapon Settings")]
-    [SerializeField] protected float range = 100f;
     [SerializeField] public bool isAutomatic = true;
 
     [Header("Effects")]
-    [SerializeField] private ParticleSystem muzzleFlash;
-    [SerializeField] private GameObject impactEffect;
-    [SerializeField] private Transform firePoint;
-
+    // `muzzleFlash`, `impactEffect`, `firePoint` and `range` are provided by RangedWeapon
+    
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip shootSound;
@@ -27,7 +24,6 @@ public class WeaponController : BaseWeapon
     public override void Start()
     {
         base.Start();
-        playerCamera = Camera.main;
         
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
@@ -64,12 +60,11 @@ public class WeaponController : BaseWeapon
 
         // Raycast to detect hit
         RaycastHit hit;
-        Vector3 shootDirection = playerCamera.transform.forward;
-        
+        Vector3 shootDirection = playerCamera != null ? playerCamera.transform.forward : transform.forward;
         if (firePoint != null)
             shootDirection = firePoint.forward;
 
-        if (Physics.Raycast(playerCamera.transform.position, shootDirection, out hit, range))
+        if (Physics.Raycast(playerCamera != null ? playerCamera.transform.position : transform.position, shootDirection, out hit, range))
         {
             Debug.Log($"Hit: {hit.collider.name}");
 

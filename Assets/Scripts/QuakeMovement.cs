@@ -18,12 +18,28 @@ public class QuakeMovement : MonoBehaviour
     [SerializeField] private float maxAirSpeed = 0.6f;
     [SerializeField] private float friction = 6f;
 
+    [Header("Mid-Air Momentum Settings")]
+    [SerializeField] private float airMomentumMultiplier = 1.4f;
+    [SerializeField] private float maxAirMomentumSpeed = 14f;
+
+    [Header("Crouch / Slide Settings")]
+    [SerializeField] private float crouchHeight = 0.9f;
+    [SerializeField] private float crouchSpeedMultiplier = 0.6f;
+    [SerializeField] private float slideSpeedThreshold = 6f;
+    [SerializeField] private float slideImpulse = 8f;
+    [SerializeField] private float slideDuration = 0.75f;
+    [SerializeField] private float slideFriction = 10f;
+    [SerializeField] private bool requireHeadroomToStand = false;
+
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 8f;
     [SerializeField] private float gravity = 20f;
 
     [Header("Mouse Look Settings")]
+    [Header("Look Sensitivity")]
     [SerializeField] private float mouseSensitivity = 2f;
+    [SerializeField] private float minSensitivity = 0.1f;
+    [SerializeField] private float maxSensitivity = 10f;
     [SerializeField] private float maxLookAngle = 90f;
     [SerializeField] private Transform cameraTransform;
 
@@ -34,16 +50,28 @@ public class QuakeMovement : MonoBehaviour
     private float rotationX = 0f;
     private bool jumpPressed = false;
     private bool isGrounded = false;
+    private bool isCrouching = false;
+    private bool isSliding = false;
+    private bool crouchHeld = false;
+    private float slideTimer = 0f;
     
     // Input System variables
     private Vector2 moveInput;
     private Vector2 lookInput;
     private bool jumpInput;
     private bool wasGroundedLastFrame = false;
+    private float defaultControllerHeight;
+    private Vector3 defaultControllerCenter;
+    private float controllerBottomOffset;
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
+        defaultControllerHeight = controller.height;
+        defaultControllerCenter = controller.center;
+        controllerBottomOffset = defaultControllerCenter.y - (defaultControllerHeight * 0.5f);
+        if (crouchHeight <= 0f)
+            crouchHeight = Mathf.Max(defaultControllerHeight * 0.6f, 0.5f);
         
         // If no camera is assigned, try to find the main camera
         if (cameraTransform == null)
@@ -72,6 +100,10 @@ public class QuakeMovement : MonoBehaviour
         
         // Check if grounded
         isGrounded = controller.isGrounded;
+        if (isSliding && !isGrounded)
+        {
+            StopSlide();
+        }
         
         // Reset vertical velocity if grounded and not jumping
         if (isGrounded && playerVelocity.y < 0)
@@ -80,7 +112,11 @@ public class QuakeMovement : MonoBehaviour
         }
         
         // Apply movement (can move in all directions simultaneously)
-        if (isGrounded)
+        if (isSliding)
+        {
+            SlideMove();
+        }
+        else if (isGrounded)
         {
             GroundMove(horizontal, vertical);
         }
@@ -156,6 +192,12 @@ public class QuakeMovement : MonoBehaviour
         }
     }
 
+    public float GetMouseSensitivity() => mouseSensitivity;
+    public void SetMouseSensitivity(float value)
+    {
+        mouseSensitivity = Mathf.Clamp(value, minSensitivity, maxSensitivity);
+    }
+
     private void GroundMove(float horizontal, float vertical)
     {
         // Don't apply friction to Y velocity
@@ -182,7 +224,7 @@ public class QuakeMovement : MonoBehaviour
         }
         
         // Accelerate (applies to horizontal movement only)
-        Accelerate(wishDir, groundSpeed, groundAcceleration);
+        Accelerate(wishDir, GetGroundSpeed(), groundAcceleration);
     }
 
     private void AirMove(float horizontal, float vertical)
@@ -205,12 +247,24 @@ public class QuakeMovement : MonoBehaviour
             
             if (addSpeed > 0)
             {
-                float accelSpeed = airAcceleration * airSpeed * Time.deltaTime;
+                float accelSpeed = airAcceleration * airSpeed * airMomentumMultiplier * Time.deltaTime;
                 if (accelSpeed > addSpeed)
                     accelSpeed = addSpeed;
                 
                 playerVelocity.x += wishDir.x * accelSpeed;
                 playerVelocity.z += wishDir.z * accelSpeed;
+            }
+        }
+
+        if (maxAirMomentumSpeed > 0f)
+        {
+            Vector3 clampedHorizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
+            float speed = clampedHorizontalVelocity.magnitude;
+            if (speed > maxAirMomentumSpeed)
+            {
+                clampedHorizontalVelocity = clampedHorizontalVelocity.normalized * maxAirMomentumSpeed;
+                playerVelocity.x = clampedHorizontalVelocity.x;
+                playerVelocity.z = clampedHorizontalVelocity.z;
             }
         }
         // If no input, maintain current horizontal velocity (no air friction)
@@ -241,6 +295,159 @@ public class QuakeMovement : MonoBehaviour
     public void AddImpulse(Vector3 impulse)
     {
         playerVelocity += impulse;
+    }
+
+    public void OnCrouch(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            crouchHeld = true;
+            BeginCrouchOrSlide();
+        }
+        else if (context.canceled)
+        {
+            crouchHeld = false;
+            EndCrouch();
+        }
+    }
+
+    public void OnCrouch(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            crouchHeld = true;
+            BeginCrouchOrSlide();
+        }
+        else
+        {
+            crouchHeld = false;
+            EndCrouch();
+        }
+    }
+
+    private void BeginCrouchOrSlide()
+    {
+        if (isSliding)
+            return;
+
+        if (isGrounded && GetHorizontalSpeed() >= slideSpeedThreshold)
+        {
+            StartSlide();
+        }
+        else
+        {
+            StartCrouch();
+        }
+    }
+
+    private void StartCrouch()
+    {
+        if (isCrouching)
+            return;
+
+        isCrouching = true;
+        controller.height = crouchHeight;
+        float newCenterY = controllerBottomOffset + crouchHeight * 0.5f;
+        controller.center = new Vector3(defaultControllerCenter.x, newCenterY, defaultControllerCenter.z);
+    }
+
+    private void StopCrouch()
+    {
+        if (!isCrouching || isSliding)
+            return;
+
+        if (requireHeadroomToStand && !CanStand())
+            return;
+
+        isCrouching = false;
+        controller.height = defaultControllerHeight;
+        controller.center = defaultControllerCenter;
+    }
+
+    private void StartSlide()
+    {
+        StartCrouch();
+        isSliding = true;
+        slideTimer = slideDuration;
+        Vector3 horizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
+        if (horizontalVelocity.magnitude < 0.1f)
+            horizontalVelocity = transform.forward;
+        playerVelocity += horizontalVelocity.normalized * slideImpulse;
+    }
+
+    private void SlideMove()
+    {
+        slideTimer -= Time.deltaTime;
+
+        Vector3 horizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
+        float speed = horizontalVelocity.magnitude;
+        if (speed > 0f)
+        {
+            float drop = slideFriction * Time.deltaTime;
+            speed = Mathf.Max(speed - drop, 0f);
+            horizontalVelocity = horizontalVelocity.normalized * speed;
+            playerVelocity.x = horizontalVelocity.x;
+            playerVelocity.z = horizontalVelocity.z;
+        }
+
+        Vector3 wishDir = transform.right * moveInput.x + transform.forward * moveInput.y;
+        if (wishDir.sqrMagnitude > 0.1f)
+        {
+            wishDir.Normalize();
+            playerVelocity.x += wishDir.x * groundAcceleration * 0.5f * Time.deltaTime;
+            playerVelocity.z += wishDir.z * groundAcceleration * 0.5f * Time.deltaTime;
+        }
+
+        playerVelocity.y = -2f;
+
+        if (slideTimer <= 0f || !isGrounded)
+        {
+            StopSlide();
+        }
+    }
+
+    private void StopSlide()
+    {
+        if (!isSliding)
+            return;
+
+        isSliding = false;
+        slideTimer = 0f;
+        if (!crouchHeld)
+        {
+            StopCrouch();
+        }
+    }
+
+    private void EndCrouch()
+    {
+        if (isSliding)
+        {
+            StopSlide();
+        }
+        StopCrouch();
+    }
+
+    private bool CanStand()
+    {
+        float radius = controller.radius * 0.95f;
+        Bounds bounds = controller.bounds;
+        Vector3 bottom = new Vector3(bounds.center.x, bounds.min.y + radius, bounds.center.z);
+        Vector3 top = bottom + Vector3.up * (defaultControllerHeight - radius * 2f);
+        return !Physics.CheckCapsule(bottom, top, radius, Physics.AllLayers, QueryTriggerInteraction.Ignore);
+    }
+
+    private float GetHorizontalSpeed()
+    {
+        Vector3 horizontal = new Vector3(playerVelocity.x, 0, playerVelocity.z);
+        return horizontal.magnitude;
+    }
+
+    private float GetGroundSpeed()
+    {
+        if (isCrouching && !isSliding)
+            return groundSpeed * crouchSpeedMultiplier;
+        return groundSpeed;
     }
 
     // Debug info

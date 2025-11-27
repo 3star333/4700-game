@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Longsword : BaseWeapon
+public class Longsword : MeleeWeapon
 {
     [Header("Melee Settings")]
     public MeleeHitbox hitbox;
@@ -32,15 +32,7 @@ public class Longsword : BaseWeapon
         nextFireTime = Time.time + fireRate;
 
         if (hitbox == null) return;
-
-        hitbox.PerformMelee(damage, (hitObj) =>
-        {
-            var eh = hitObj.GetComponent<EnemyHealth>();
-            if (eh != null)
-            {
-                eh.TakeDamage(damage);
-            }
-        });
+        DoMelee(damage);
     }
 
     // Block input toggles are handled via PlayerDefense but Longsword ensures the multiplier is set.

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Stake : BaseWeapon
+public class Stake : MeleeWeapon
 {
     [Header("Melee Settings")]
     public MeleeHitbox hitbox;
@@ -13,7 +13,7 @@ public class Stake : BaseWeapon
         nextFireTime = Time.time + fireRate;
 
         if (hitbox == null) return;
-
+        // Custom vampire multiplier handling
         hitbox.PerformMelee(damage, (hitObj) =>
         {
             var eh = hitObj.GetComponent<EnemyHealth>();
