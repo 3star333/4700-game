@@ -4,18 +4,15 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Pump-action shotgun, fires pellets in a spread.
 /// </summary>
-public class PumpShotgun : BaseWeapon
+public class PumpShotgun : RangedWeapon
 {
     [SerializeField] private int pelletCount = 8;
     [SerializeField] private float spreadAngle = 10f;
-    [SerializeField] private float range = 30f;
-
-    private Camera playerCamera;
+    [SerializeField] private float range = 30f; // optional override (RangedWeapon already has range)
 
     public override void Start()
     {
         base.Start();
-        playerCamera = Camera.main;
     }
 
     public override void Fire()
