@@ -1,15 +1,14 @@
 using UnityEngine;
+using GothicShooter.Health;
 
 /// <summary>
-/// Simple health system for enemies.
-/// Attach to any enemy GameObject.
+/// Enemy health component - REFACTORED to use HealthComponent + IDamageable.
+/// Handles enemy-specific logic: point rewards, death VFX, round scaling.
+/// Attach to any enemy GameObject alongside HealthComponent.
 /// </summary>
+[RequireComponent(typeof(HealthComponent))]
 public class EnemyHealth : MonoBehaviour
 {
-    [Header("Health Settings")]
-    [SerializeField] private float maxHealth = 100f;
-    [SerializeField] private float currentHealth;
-
     [Header("Effects")]
     [SerializeField] private GameObject deathEffect;
     [SerializeField] private AudioClip deathSound;
@@ -17,9 +16,21 @@ public class EnemyHealth : MonoBehaviour
     [Header("Rewards")]
     [SerializeField] private int pointsOnKill = 100;
 
-    private void Start()
+    private HealthComponent healthComponent;
+
+    private void Awake()
     {
-        currentHealth = maxHealth;
+        healthComponent = GetComponent<HealthComponent>();
+    }
+
+    private void OnEnable()
+    {
+        healthComponent.OnDeath += HandleDeath;
+    }
+
+    private void OnDisable()
+    {
+        healthComponent.OnDeath -= HandleDeath;
     }
 
     /// <summary>
@@ -28,23 +39,18 @@ public class EnemyHealth : MonoBehaviour
     public void ScaleHealth(float scale)
     {
         if (scale <= 0f) return;
-        maxHealth *= scale;
-        currentHealth = Mathf.Min(currentHealth * scale, maxHealth);
-    }
-
-    public void TakeDamage(float damage)
-    {
-        currentHealth -= damage;
         
-        Debug.Log($"{gameObject.name} took {damage} damage. Health: {currentHealth}");
-
-        if (currentHealth <= 0)
+        float scaledMaxHealth = healthComponent.MaxHealth * scale;
+        healthComponent.SetMaxHealth(scaledMaxHealth);
+        
+        // Also scale current health if enemy hasn't taken damage yet
+        if (healthComponent.CurrentHealth == healthComponent.MaxHealth / scale)
         {
-            Die();
+            healthComponent.Heal(healthComponent.MaxHealth);
         }
     }
 
-    private void Die()
+    private void HandleDeath()
     {
         Debug.Log($"{gameObject.name} died!");
 
@@ -61,17 +67,20 @@ public class EnemyHealth : MonoBehaviour
         }
 
         // Award points (if a ScoreManager exists)
-        ScoreManager.Instance?.AddPoints(pointsOnKill);
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.AddPoints(pointsOnKill);
+        }
+
+        // Notify round manager enemy was killed (future hook)
+        // RoundManager.Instance?.OnEnemyKilled();
 
         // Destroy enemy
         Destroy(gameObject);
     }
 
-    public float GetHealthPercentage()
-    {
-        return currentHealth / maxHealth;
-    }
-
-    public float GetCurrentHealth() => currentHealth;
-    public float GetMaxHealth() => maxHealth;
+    // Public accessors for compatibility with existing code
+    public float GetHealthPercentage() => healthComponent.GetHealthPercentage();
+    public float GetCurrentHealth() => healthComponent.CurrentHealth;
+    public float GetMaxHealth() => healthComponent.MaxHealth;
 }

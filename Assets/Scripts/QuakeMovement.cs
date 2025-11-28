@@ -3,32 +3,45 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Quake-style movement controller for first-person player movement.
-/// Features bunny hopping, air control, and momentum-based physics.
+/// 
+/// FEATURES:
+/// - NO SPRINTING: Base movement speed only
+/// - MELEE SPEED BONUS: 15% faster movement with melee weapons equipped
+/// - MOMENTUM-BASED SLIDING: Slide builds momentum over time, capped at maxSlideSpeed
+/// - SLIDE JUMPING: Jump from slide for extra momentum boost (slideJumpBoostMultiplier)
+/// - AIR STRAFING: 
+///   * Keyboard AD strafing: Minimal momentum gain (prevents easy speed building)
+///   * Camera-based strafing: High momentum gain when turning camera while strafing (rewards skill)
+/// - BUNNY HOPPING: Preserve momentum between jumps for high speeds
+/// 
 /// Attach to any player GameObject with a CharacterController component.
 /// Uses Unity's new Input System.
+/// Call UpdateWeaponType() when switching weapons to update speed modifier.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class QuakeMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float groundSpeed = 7f;
-    [SerializeField] private float airSpeed = 0.8f; // Reduced for better control
+    [SerializeField] private float baseGroundSpeed = 7f;
+    [SerializeField] private float meleeWeaponSpeedBonus = 0.15f; // 15% speed boost for melee weapons
     [SerializeField] private float groundAcceleration = 14f;
-    [SerializeField] private float airAcceleration = 10f; // Increased for responsiveness
-    [SerializeField] private float maxAirSpeed = 0.6f;
     [SerializeField] private float friction = 6f;
 
-    [Header("Mid-Air Momentum Settings")]
-    [SerializeField] private float airMomentumMultiplier = 1.4f;
-    [SerializeField] private float maxAirMomentumSpeed = 14f;
+    [Header("Air Control Settings")]
+    [SerializeField] private float airAcceleration = 2f; // Low to prevent AD strafe momentum
+    [SerializeField] private float airStrafeAcceleration = 0.5f; // Minimal for keyboard strafing
+    [SerializeField] private float airCameraAcceleration = 12f; // High for camera-based air strafe
+    [SerializeField] private float maxAirSpeed = 20f; // Allow high speeds from bunny hopping
+    [SerializeField] private float airControlThreshold = 0.1f; // Minimum input for air control
 
-    [Header("Crouch / Slide Settings")]
+    [Header("Slide Settings")]
     [SerializeField] private float crouchHeight = 0.9f;
-    [SerializeField] private float crouchSpeedMultiplier = 0.6f;
-    [SerializeField] private float slideSpeedThreshold = 6f;
-    [SerializeField] private float slideImpulse = 8f;
-    [SerializeField] private float slideDuration = 0.75f;
-    [SerializeField] private float slideFriction = 10f;
+    [SerializeField] private float slideSpeedThreshold = 5f; // Can slide at this speed
+    [SerializeField] private float slideInitialBoost = 3f; // Boost when starting slide
+    [SerializeField] private float slideMomentumMultiplier = 1.2f; // Momentum builds during slide
+    [SerializeField] private float maxSlideSpeed = 18f; // Maximum speed during slide
+    [SerializeField] private float slideFriction = 2f; // Low friction to maintain momentum
+    [SerializeField] private float slideJumpBoostMultiplier = 1.3f; // Extra boost when jumping from slide
     [SerializeField] private bool requireHeadroomToStand = false;
 
     [Header("Jump Settings")]
@@ -36,7 +49,6 @@ public class QuakeMovement : MonoBehaviour
     [SerializeField] private float gravity = 20f;
 
     [Header("Mouse Look Settings")]
-    [Header("Look Sensitivity")]
     [SerializeField] private float mouseSensitivity = 2f;
     [SerializeField] private float minSensitivity = 0.1f;
     [SerializeField] private float maxSensitivity = 10f;
@@ -54,10 +66,15 @@ public class QuakeMovement : MonoBehaviour
     private bool isSliding = false;
     private bool crouchHeld = false;
     private float slideTimer = 0f;
+    private Vector3 slideDirection = Vector3.zero;
+    private float currentSlideSpeed = 0f;
+    private bool hasMeleeWeapon = false; // Track if player has melee weapon equipped
     
     // Input System variables
     private Vector2 moveInput;
     private Vector2 lookInput;
+    private Vector3 lastLookDirection = Vector3.forward;
+    private float cameraRotationDelta = 0f;
     private bool jumpInput;
     private bool wasGroundedLastFrame = false;
     private float defaultControllerHeight;
@@ -83,6 +100,15 @@ public class QuakeMovement : MonoBehaviour
                 cameraTransform.localPosition = new Vector3(0, 0.6f, 0);
             }
         }
+        
+        // Initialize last look direction
+        if (cameraTransform != null)
+        {
+            lastLookDirection = cameraTransform.forward;
+        }
+        
+        // Check for melee weapon at start
+        UpdateWeaponType();
         
         // Lock and hide cursor
         Cursor.lockState = CursorLockMode.Locked;
@@ -150,19 +176,28 @@ public class QuakeMovement : MonoBehaviour
         // Only jump on button press (not hold)
         if (context.performed && isGrounded)
         {
-            playerVelocity.y = jumpForce;
+            // If sliding, apply extra boost
+            if (isSliding)
+            {
+                float horizontalSpeed = GetHorizontalSpeed();
+                playerVelocity.y = jumpForce;
+                
+                // Apply slide jump boost
+                Vector3 horizontalVel = new Vector3(playerVelocity.x, 0, playerVelocity.z);
+                if (horizontalVel.magnitude > 0.1f)
+                {
+                    horizontalVel = horizontalVel.normalized * horizontalSpeed * slideJumpBoostMultiplier;
+                    playerVelocity.x = horizontalVel.x;
+                    playerVelocity.z = horizontalVel.z;
+                }
+                
+                StopSlide();
+            }
+            else
+            {
+                playerVelocity.y = jumpForce;
+            }
         }
-    }
-    
-    // Fallback methods in case Unity is looking for these
-    public void OnMove(InputValue value)
-    {
-        moveInput = value.Get<Vector2>();
-    }
-    
-    public void OnLook(InputValue value)
-    {
-        lookInput = value.Get<Vector2>();
     }
     
     public void OnJump(InputValue value)
@@ -170,7 +205,27 @@ public class QuakeMovement : MonoBehaviour
         // Only jump on button press (not hold)
         if (value.isPressed && isGrounded)
         {
-            playerVelocity.y = jumpForce;
+            // If sliding, apply extra boost
+            if (isSliding)
+            {
+                float horizontalSpeed = GetHorizontalSpeed();
+                playerVelocity.y = jumpForce;
+                
+                // Apply slide jump boost
+                Vector3 horizontalVel = new Vector3(playerVelocity.x, 0, playerVelocity.z);
+                if (horizontalVel.magnitude > 0.1f)
+                {
+                    horizontalVel = horizontalVel.normalized * horizontalSpeed * slideJumpBoostMultiplier;
+                    playerVelocity.x = horizontalVel.x;
+                    playerVelocity.z = horizontalVel.z;
+                }
+                
+                StopSlide();
+            }
+            else
+            {
+                playerVelocity.y = jumpForce;
+            }
         }
     }
 
@@ -178,6 +233,9 @@ public class QuakeMovement : MonoBehaviour
     {
         float mouseX = lookInput.x * mouseSensitivity;
         float mouseY = lookInput.y * mouseSensitivity;
+        
+        // Calculate camera rotation delta for air strafing
+        cameraRotationDelta = Mathf.Abs(mouseX);
         
         // Rotate player horizontally
         transform.Rotate(Vector3.up * mouseX);
@@ -189,6 +247,12 @@ public class QuakeMovement : MonoBehaviour
         if (cameraTransform != null)
         {
             cameraTransform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+            
+            // Update look direction for air control
+            Vector3 currentLookDirection = cameraTransform.forward;
+            currentLookDirection.y = 0;
+            currentLookDirection.Normalize();
+            lastLookDirection = currentLookDirection;
         }
     }
 
@@ -229,45 +293,64 @@ public class QuakeMovement : MonoBehaviour
 
     private void AirMove(float horizontal, float vertical)
     {
-        // Preserve current horizontal velocity
+        // Get current horizontal velocity
         Vector3 horizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
         
-        // Get desired direction - allows diagonal air movement
+        // Get keyboard input direction
         Vector3 wishDir = transform.right * horizontal + transform.forward * vertical;
         wishDir.y = 0;
         
         // Only apply air control if player is giving input
-        if (wishDir.magnitude > 0.1f)
+        if (wishDir.magnitude > airControlThreshold)
         {
             wishDir.Normalize();
             
-            // Air strafe acceleration - adds velocity in the wish direction
+            // Calculate angle between current velocity and wish direction
+            float velocityAngle = 0f;
+            if (horizontalVelocity.magnitude > 0.1f)
+            {
+                velocityAngle = Vector3.Angle(horizontalVelocity.normalized, wishDir);
+            }
+            
+            // AD strafing (keyboard only) - minimal momentum gain
             float currentSpeed = Vector3.Dot(horizontalVelocity, wishDir);
-            float addSpeed = airSpeed - currentSpeed;
+            float addSpeed = airStrafeAcceleration - currentSpeed;
             
             if (addSpeed > 0)
             {
-                float accelSpeed = airAcceleration * airSpeed * airMomentumMultiplier * Time.deltaTime;
+                float accelSpeed = airAcceleration * Time.deltaTime;
                 if (accelSpeed > addSpeed)
                     accelSpeed = addSpeed;
                 
                 playerVelocity.x += wishDir.x * accelSpeed;
                 playerVelocity.z += wishDir.z * accelSpeed;
             }
+            
+            // Camera-based air strafing - builds momentum when turning camera
+            // This rewards skillful air control by turning into the strafe direction
+            if (cameraRotationDelta > 0.1f && velocityAngle < 90f)
+            {
+                // Apply camera-based acceleration (Quake-style strafe jumping)
+                float cameraBonus = cameraRotationDelta * airCameraAcceleration * Time.deltaTime;
+                
+                // Apply in the wish direction
+                playerVelocity.x += wishDir.x * cameraBonus;
+                playerVelocity.z += wishDir.z * cameraBonus;
+            }
         }
 
-        if (maxAirMomentumSpeed > 0f)
+        // Clamp to max air speed
+        if (maxAirSpeed > 0f)
         {
             Vector3 clampedHorizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
             float speed = clampedHorizontalVelocity.magnitude;
-            if (speed > maxAirMomentumSpeed)
+            if (speed > maxAirSpeed)
             {
-                clampedHorizontalVelocity = clampedHorizontalVelocity.normalized * maxAirMomentumSpeed;
+                clampedHorizontalVelocity = clampedHorizontalVelocity.normalized * maxAirSpeed;
                 playerVelocity.x = clampedHorizontalVelocity.x;
                 playerVelocity.z = clampedHorizontalVelocity.z;
             }
         }
-        // If no input, maintain current horizontal velocity (no air friction)
     }
 
     private void Accelerate(Vector3 wishDir, float wishSpeed, float accel)
@@ -368,39 +451,58 @@ public class QuakeMovement : MonoBehaviour
     {
         StartCrouch();
         isSliding = true;
-        slideTimer = slideDuration;
+        
+        // Calculate slide direction based on current velocity or forward direction
         Vector3 horizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
         if (horizontalVelocity.magnitude < 0.1f)
-            horizontalVelocity = transform.forward;
-        playerVelocity += horizontalVelocity.normalized * slideImpulse;
+        {
+            slideDirection = transform.forward;
+            currentSlideSpeed = baseGroundSpeed;
+        }
+        else
+        {
+            slideDirection = horizontalVelocity.normalized;
+            currentSlideSpeed = horizontalVelocity.magnitude;
+        }
+        
+        // Apply initial slide boost
+        currentSlideSpeed += slideInitialBoost;
+        
+        // Apply boosted velocity
+        playerVelocity.x = slideDirection.x * currentSlideSpeed;
+        playerVelocity.z = slideDirection.z * currentSlideSpeed;
     }
 
     private void SlideMove()
     {
-        slideTimer -= Time.deltaTime;
-
-        Vector3 horizontalVelocity = new Vector3(playerVelocity.x, 0, playerVelocity.z);
-        float speed = horizontalVelocity.magnitude;
-        if (speed > 0f)
-        {
-            float drop = slideFriction * Time.deltaTime;
-            speed = Mathf.Max(speed - drop, 0f);
-            horizontalVelocity = horizontalVelocity.normalized * speed;
-            playerVelocity.x = horizontalVelocity.x;
-            playerVelocity.z = horizontalVelocity.z;
-        }
-
+        // Build momentum during slide
+        currentSlideSpeed += currentSlideSpeed * (slideMomentumMultiplier - 1f) * Time.deltaTime;
+        
+        // Clamp to max slide speed
+        currentSlideSpeed = Mathf.Min(currentSlideSpeed, maxSlideSpeed);
+        
+        // Apply friction
+        float friction = slideFriction * Time.deltaTime;
+        currentSlideSpeed = Mathf.Max(currentSlideSpeed - friction, 0f);
+        
+        // Allow slight steering during slide (limited air control)
         Vector3 wishDir = transform.right * moveInput.x + transform.forward * moveInput.y;
-        if (wishDir.sqrMagnitude > 0.1f)
+        if (wishDir.sqrMagnitude > 0.01f)
         {
             wishDir.Normalize();
-            playerVelocity.x += wishDir.x * groundAcceleration * 0.5f * Time.deltaTime;
-            playerVelocity.z += wishDir.z * groundAcceleration * 0.5f * Time.deltaTime;
+            
+            // Blend slide direction towards input (limited steering)
+            slideDirection = Vector3.Lerp(slideDirection, wishDir, Time.deltaTime * 1.5f);
+            slideDirection.Normalize();
         }
-
-        playerVelocity.y = -2f;
-
-        if (slideTimer <= 0f || !isGrounded)
+        
+        // Apply slide velocity
+        playerVelocity.x = slideDirection.x * currentSlideSpeed;
+        playerVelocity.z = slideDirection.z * currentSlideSpeed;
+        playerVelocity.y = -2f; // Keep grounded
+        
+        // Stop slide if speed is too low or not grounded
+        if (currentSlideSpeed < slideSpeedThreshold * 0.5f || !isGrounded)
         {
             StopSlide();
         }
@@ -413,6 +515,8 @@ public class QuakeMovement : MonoBehaviour
 
         isSliding = false;
         slideTimer = 0f;
+        currentSlideSpeed = 0f;
+        
         if (!crouchHeld)
         {
             StopCrouch();
@@ -445,9 +549,33 @@ public class QuakeMovement : MonoBehaviour
 
     private float GetGroundSpeed()
     {
-        if (isCrouching && !isSliding)
-            return groundSpeed * crouchSpeedMultiplier;
-        return groundSpeed;
+        float speed = baseGroundSpeed;
+        
+        // Apply melee weapon speed bonus
+        if (hasMeleeWeapon)
+        {
+            speed *= (1f + meleeWeaponSpeedBonus);
+        }
+        
+        return speed;
+    }
+    
+    /// <summary>
+    /// Call this to update movement speed when weapon changes.
+    /// Checks if current weapon is melee or ranged.
+    /// </summary>
+    public void UpdateWeaponType()
+    {
+        // Check for melee weapon component on player or children
+        MeleeWeapon meleeWeapon = GetComponentInChildren<MeleeWeapon>();
+        hasMeleeWeapon = (meleeWeapon != null);
+        
+        // Alternative: Check WeaponManager if you have one
+        WeaponManager weaponManager = GetComponent<WeaponManager>();
+        if (weaponManager != null && weaponManager.CurrentWeapon != null)
+        {
+            hasMeleeWeapon = weaponManager.CurrentWeapon is MeleeWeapon;
+        }
     }
 
     // Debug info
