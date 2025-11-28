@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using GothicShooter.Core;
 
 /// <summary>
 /// Basic weapon controller for shooting mechanics.
 /// Attach to the player's camera or a weapon object.
+/// REFACTORED: Now uses IDamageable interface for universal damage.
 /// </summary>
 public class WeaponController : RangedWeapon
 {
@@ -18,7 +20,7 @@ public class WeaponController : RangedWeapon
     [SerializeField] private AudioClip shootSound;
     [SerializeField] private AudioClip emptySound;
 
-    private Camera playerCamera;
+    // playerCamera is inherited from RangedWeapon (protected)
     private bool shootInput = false;
 
     public override void Start()
@@ -68,11 +70,11 @@ public class WeaponController : RangedWeapon
         {
             Debug.Log($"Hit: {hit.collider.name}");
 
-            // Check if we hit an enemy
-            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null)
+            // Check if we hit any damageable entity (enemies, props, etc.)
+            IDamageable damageable = hit.collider.GetComponent<IDamageable>();
+            if (damageable != null)
             {
-                enemy.TakeDamage(damage);
+                damageable.TakeDamage(damage, gameObject);
             }
 
             // Spawn impact effect

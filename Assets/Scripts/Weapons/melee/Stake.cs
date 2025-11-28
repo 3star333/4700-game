@@ -1,4 +1,5 @@
 using UnityEngine;
+using GothicShooter.Core;
 
 public class Stake : MeleeWeapon
 {
@@ -16,8 +17,8 @@ public class Stake : MeleeWeapon
         // Custom vampire multiplier handling
         hitbox.PerformMelee(damage, (hitObj) =>
         {
-            var eh = hitObj.GetComponent<EnemyHealth>();
-            if (eh != null)
+            IDamageable damageable = hitObj.GetComponent<IDamageable>();
+            if (damageable != null)
             {
                 float finalDamage = damage;
                 if (hitObj.CompareTag("Vampire"))
@@ -25,7 +26,7 @@ public class Stake : MeleeWeapon
                     finalDamage *= vampireMultiplier;
                 }
 
-                eh.TakeDamage(finalDamage);
+                damageable.TakeDamage(finalDamage, gameObject);
             }
         });
     }

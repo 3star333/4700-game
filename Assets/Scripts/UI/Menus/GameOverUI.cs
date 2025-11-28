@@ -117,7 +117,7 @@ namespace GothicShooter.UI
             // Display final score
             if (finalScoreText != null)
             {
-                int finalScore = ScoreManager.Instance != null ? ScoreManager.Instance.GetPoints() : 0;
+                int finalScore = ScoreManager.Instance != null ? ScoreManager.Instance.Points : 0;
                 finalScoreText.text = $"Final Score: {finalScore}";
             }
         }

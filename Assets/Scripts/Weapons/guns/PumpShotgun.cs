@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using GothicShooter.Core;
 
 /// <summary>
 /// Pump-action shotgun, fires pellets in a spread.
+/// REFACTORED: Now uses IDamageable interface.
 /// </summary>
 public class PumpShotgun : RangedWeapon
 {
@@ -31,10 +33,10 @@ public class PumpShotgun : RangedWeapon
 
             if (Physics.Raycast(playerCamera.transform.position, shootDir, out RaycastHit hit, range))
             {
-                EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-                if (enemy != null)
+                IDamageable damageable = hit.collider.GetComponent<IDamageable>();
+                if (damageable != null)
                 {
-                    enemy.TakeDamage(damage / pelletCount);
+                    damageable.TakeDamage(damage / pelletCount, gameObject);
                 }
                 if (impactEffect != null)
                 {

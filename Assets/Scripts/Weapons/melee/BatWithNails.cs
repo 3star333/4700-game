@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using GothicShooter.Core;
 
 public class BatWithNails : MeleeWeapon
 {
@@ -16,11 +17,12 @@ public class BatWithNails : MeleeWeapon
         if (hitbox == null) return;
         hitbox.PerformMelee(damage, (hitObj) =>
         {
-            var eh = hitObj.GetComponent<EnemyHealth>();
-            if (eh != null)
+            IDamageable damageable = hitObj.GetComponent<IDamageable>();
+            if (damageable != null)
             {
-                eh.TakeDamage(damage);
-                // Apply bleed as a coroutine on the enemy if possible
+                damageable.TakeDamage(damage, gameObject);
+                
+                // Apply bleed effect to the target
                 var bleed = hitObj.GetComponent<BleedEffect>();
                 if (bleed == null)
                     bleed = hitObj.AddComponent<BleedEffect>();
