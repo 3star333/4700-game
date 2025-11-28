@@ -1,0 +1,92 @@
+using UnityEngine;
+
+public class LootChest : MonoBehaviour
+{
+    [Header("Spawn Settings")]
+    public Transform lootSpawnPoint;
+    public bool openOnlyOnce = true;
+    private bool hasBeenOpened = false;
+
+    [Header("Weapon Prefabs By Rarity")]
+    public GameObject[] commonWeapons;
+    public GameObject[] uncommonWeapons;
+    public GameObject[] rareWeapons;
+    public GameObject[] legendaryWeapons;
+
+    [Header("Rarity Weights")]
+    [Tooltip("Relative chance - higher numbers mean more common")]
+    public float legendaryWeight = 7f;
+    public float rareWeight = 20f;
+    public float uncommonWeight = 40f;
+    public float commonWeight = 60f;
+
+    public void OpenChest()
+    {
+        if (openOnlyOnce && hasBeenOpened) return;
+        hasBeenOpened = true;
+
+        Rarity chosenRarity = RollRarity();
+        GameObject weaponPrefab = PickWeaponForRarity(chosenRarity);
+
+        if (weaponPrefab != null && lootSpawnPoint != null)
+        {
+            Instantiate(weaponPrefab, lootSpawnPoint.position, lootSpawnPoint.rotation);
+        }
+        else
+        {
+            Debug.LogWarning("LootChest: Missing weapon prefab or spawn point");
+        }
+    }
+
+    private enum Rarity { Common, Uncommon, Rare, Legendary }
+
+    private Rarity RollRarity()
+    {
+        float totalWeight = legendaryWeight + rareWeight + uncommonWeight + commonWeight;
+        float roll = Random.value * totalWeight;
+
+        if (roll < legendaryWeight)
+            return Rarity.Legendary;
+
+        roll -= legendaryWeight;
+        if (roll < rareWeight)
+            return Rarity.Rare;
+
+        roll -= rareWeight;
+        if (roll < uncommonWeight)
+            return Rarity.Uncommon;
+
+        return Rarity.Common;
+    }
+
+    private GameObject PickWeaponForRarity(Rarity rarity)
+    {
+        GameObject[] pool = null;
+
+        switch (rarity)
+        {
+            case Rarity.Legendary: pool = legendaryWeapons; break;
+            case Rarity.Rare: pool = rareWeapons; break;
+            case Rarity.Uncommon: pool = uncommonWeapons; break;
+            case Rarity.Common: pool = commonWeapons; break;
+        }
+
+        if (pool == null || pool.Length == 0)
+        {
+            Debug.LogWarning($"LootChest: No weapons for {rarity} rarity");
+            return null;
+        }
+
+        return pool[Random.Range(0, pool.Length)];
+    }
+
+    // Visual helper in editor
+    private void OnDrawGizmosSelected()
+    {
+        if (lootSpawnPoint != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(lootSpawnPoint.position, 0.1f);
+        }
+    }
+}
