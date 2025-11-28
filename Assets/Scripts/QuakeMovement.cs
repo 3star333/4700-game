@@ -165,10 +165,20 @@ public class QuakeMovement : MonoBehaviour
     {
         moveInput = context.ReadValue<Vector2>();
     }
+
+    public void OnMove(InputValue value)
+    {
+        moveInput = value.Get<Vector2>();
+    }
     
     public void OnLook(InputAction.CallbackContext context)
     {
         lookInput = context.ReadValue<Vector2>();
+    }
+
+    public void OnLook(InputValue value)
+    {
+        lookInput = value.Get<Vector2>();
     }
     
     public void OnJump(InputAction.CallbackContext context)
