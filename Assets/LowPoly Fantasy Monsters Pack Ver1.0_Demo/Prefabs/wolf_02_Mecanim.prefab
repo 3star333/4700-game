@@ -9566,7 +9566,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &470744
 Transform:
   m_ObjectHideFlags: 0
@@ -9854,7 +9854,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeY:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -9907,7 +9907,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startSizeZ:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 1
       maxCurve:
@@ -25583,7 +25583,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b83bd773ec2a4f71969b225ee2aeb53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GothicShooter.Health.HealthComponent
-  maxHealth: 100
+  maxHealth: 140
   invulnerable: 0
   destroyOnDeath: 0
 --- !u!114 &1403639235420945310

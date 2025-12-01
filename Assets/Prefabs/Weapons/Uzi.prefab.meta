@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a7c92a48dc015440b9022a729f2b1db9
+guid: 6273e2936e9d6a24e9f64c7c70d6bd19
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 100100000
@@ -11,5 +11,5 @@ AssetOrigin:
   productId: 151980
   packageName: Untitled
   packageVersion: 1.0
-  assetPath: Assets/Low Poly Weapons VOL.1/Prefabs/Bennelli_M4.prefab
+  assetPath: Assets/Low Poly Weapons VOL.1/Prefabs/Uzi.prefab
   uploadId: 324403
