@@ -4,7 +4,9 @@ namespace GothicShooter.Mobs
 {
 public class ZombieSpawner : MonoBehaviour
 {
-    public GameObject zombiePrefab;   // Drag your zombie prefab here
+    [Header("Mob Prefabs")]
+    [Tooltip("List of possible mob prefabs to spawn (zombies, wolves, vampires, etc.)")]
+    public GameObject[] mobPrefabs;   // Drag your mob prefabs here
     public Transform player;          // Drag your player here
     [Tooltip("Max distance from player to spawn. Typical FPS feel ~45m")] public float spawnRadius = 45f;   // Distance from player to spawn
     [Tooltip("Min distance from player to avoid popping in their face")] public float minSpawnRadius = 10f;
@@ -67,10 +69,19 @@ public class ZombieSpawner : MonoBehaviour
             TryPlaceOnNavMesh(ref spawnPos);
         }
 
-        // Spawn zombie
-        GameObject zombie = Instantiate(zombiePrefab, spawnPos, Quaternion.identity);
+        // Choose which mob prefab to spawn
+        if (mobPrefabs == null || mobPrefabs.Length == 0)
+        {
+            Debug.LogWarning("[ZombieSpawner] No mobPrefabs assigned; cannot spawn.");
+            return;
+        }
 
-        // Assign player dynamically and apply scaling
+        GameObject prefab = mobPrefabs[Random.Range(0, mobPrefabs.Length)];
+
+        // Spawn chosen mob
+        GameObject zombie = Instantiate(prefab, spawnPos, Quaternion.identity);
+
+        // Assign player dynamically and apply scaling (supports different AI scripts)
         ZombieAI ai = zombie.GetComponent<ZombieAI>();
         if (ai != null)
         {
@@ -78,8 +89,10 @@ public class ZombieSpawner : MonoBehaviour
             ai.speed *= spawnSpeedScale;
         }
 
+        // TODO: If you add other AI types (WolfAI, VampireAI, etc.), you can configure them here as well.
+
         // Scale health via HealthComponent if present
-        var hc = zombie.GetComponent<HealthComponent>();
+    var hc = zombie.GetComponent<HealthComponent>();
         if (hc != null)
         {
             hc.SetMaxHealth(Mathf.RoundToInt(hc.MaxHealth * spawnHealthScale));
