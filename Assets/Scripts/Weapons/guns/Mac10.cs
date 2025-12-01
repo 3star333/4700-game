@@ -2,19 +2,20 @@ using UnityEngine;
 
 /// <summary>
 /// MAC-10 SMG - automatic, fast fire rate, low damage.
-/// Inherits the hitscan WeaponController for simplicity.
-/// Set default values so it works without additional configuration.
 /// </summary>
-public class Mac10 : WeaponController
+public class Mac10 : Weapon
 {
-    private void Reset()
+    public override void Start()
     {
         weaponName = "MAC-10";
         damage = 12f;
-        fireRate = 0.08f; // Fast
+        fireRate = 0.08f;
         maxAmmo = 50;
-        currentAmmo = maxAmmo;
         isAutomatic = true;
         range = 80f;
+        pelletsPerShot = 1;
+        spreadAngle = 2f;
+
+        base.Start();
     }
 }

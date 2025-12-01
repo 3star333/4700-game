@@ -29,7 +29,7 @@ public class WeaponBuyStation : MonoBehaviour, IInteractable
             purchased = true;
             Debug.Log($"Purchased {weaponName} for {cost} points.");
 
-            // If a weapon prefab has a WeaponController component, instantiate and parent it to the player
+            // If a weapon prefab has a Weapon component, instantiate and parent it to the player
             if (weaponPrefab != null && interactor != null)
             {
                 WeaponManager wm = interactor.GetComponent<WeaponManager>();
