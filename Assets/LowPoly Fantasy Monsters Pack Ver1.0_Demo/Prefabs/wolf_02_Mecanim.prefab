@@ -25394,8 +25394,9 @@ GameObject:
   - component: {fileID: 5480392}
   - component: {fileID: 3068072813133837751}
   - component: {fileID: 4398169208703048746}
-  - component: {fileID: 7181158761113261423}
-  - component: {fileID: 6194212269777709929}
+  - component: {fileID: 1403599577950874828}
+  - component: {fileID: 8478480907148018577}
+  - component: {fileID: 1403639235420945310}
   m_Layer: 0
   m_Name: wolf_02_Mecanim
   m_TagString: Untagged
@@ -25552,7 +25553,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d278a5d727c0ae44aa0040a731812090, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
---- !u!114 &7181158761113261423
+--- !u!114 &1403599577950874828
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25561,13 +25562,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 180470}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc7add5d0dd65d542a9465cd9f7332d8, type: 3}
+  m_Script: {fileID: 11500000, guid: bd565ff87d95246acace02bf36024781, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ZombieAI
+  m_EditorClassIdentifier: Assembly-CSharp::GothicShooter.Mobs.WolfAI
   player: {fileID: 0}
-  speed: 3
-  stoppingDistance: 1
---- !u!114 &6194212269777709929
+  speed: 3.5
+  rotateSpeed: 10
+  biteRange: 1.6
+  biteDamage: 15
+  attackCooldown: 1.2
+--- !u!114 &8478480907148018577
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25576,7 +25580,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 180470}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6998d7f44f44764993b124500c1c2ea, type: 3}
+  m_Script: {fileID: 11500000, guid: 5b83bd773ec2a4f71969b225ee2aeb53, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ZombieHealth
-  health: 100
+  m_EditorClassIdentifier: Assembly-CSharp::GothicShooter.Health.HealthComponent
+  maxHealth: 100
+  invulnerable: 0
+  destroyOnDeath: 0
+--- !u!114 &1403639235420945310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 180470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878eba890d19ce244aba31d05fee6c7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  deathEffect: {fileID: 0}
+  deathSound: {fileID: 0}
+  pointsOnKill: 100
