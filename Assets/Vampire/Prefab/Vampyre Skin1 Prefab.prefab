@@ -10,6 +10,12 @@ GameObject:
   m_Component:
   - component: {fileID: 821007471526473717}
   - component: {fileID: 931810330845842955}
+  - component: {fileID: 7273018026119898641}
+  - component: {fileID: 2554016053927527105}
+  - component: {fileID: 4606797753328627880}
+  - component: {fileID: 2830875989058579334}
+  - component: {fileID: 7275898386441239316}
+  - component: {fileID: 7891131821307139471}
   m_Layer: 0
   m_Name: Vampyre Skin1 Prefab
   m_TagString: Untagged
@@ -58,6 +64,114 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7273018026119898641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13261615901619535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cafb775b7e552124db60da0cd2644f6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GothicShooter.Mobs.ZombieAI
+  player: {fileID: 0}
+  speed: 3
+  stoppingDistance: 1
+  attackHitbox: {fileID: 0}
+  attackEnableDistance: 2
+--- !u!114 &2554016053927527105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13261615901619535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b83bd773ec2a4f71969b225ee2aeb53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GothicShooter.Health.HealthComponent
+  maxHealth: 100
+  invulnerable: 0
+  destroyOnDeath: 0
+--- !u!114 &4606797753328627880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13261615901619535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878eba890d19ce244aba31d05fee6c7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  deathEffect: {fileID: 0}
+  deathSound: {fileID: 0}
+  pointsOnKill: 100
+--- !u!136 &2830875989058579334
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13261615901619535}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 1, z: 0}
+--- !u!65 &7275898386441239316
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13261615901619535}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.1906745, y: 1, z: 0.32}
+  m_Center: {x: -0.04760444, y: 1.5999999, z: -0.27}
+--- !u!114 &7891131821307139471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13261615901619535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b45b40817bfdd46fb9c27bff75ed9cd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GothicShooter.Mobs.EnemyDeathDrop
+  healthOrbPrefab: {fileID: 8493856638094537694, guid: a4e3ebe67fe99481bbde4fd30ae492d7, type: 3}
+  ammoOrbPrefab: {fileID: 4450117418065418043, guid: 7a6c8438f3f8d49a39c44715e54a4440, type: 3}
+  healthDropChance: 1
+  ammoDropChance: 0.41
+  spawnOffset: {x: 0, y: 0.65, z: 0}
 --- !u!1 &61943650210657345
 GameObject:
   m_ObjectHideFlags: 0
@@ -439,7 +553,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f10c1df891eeddb4c9ba8df23419a5c1, type: 2}
+  - {fileID: 2100000, guid: 6296382e7b03f064481d5b82ba26ed4e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

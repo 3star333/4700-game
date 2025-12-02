@@ -288,10 +288,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AK101
   weaponName: AK-101
   damage: 65
-  fireRate: 1.1
+  fireRate: 6
   maxAmmo: 31
   currentAmmo: 30
-  range: 200
+  range: 400
   pelletsPerShot: 1
   spreadAngle: 0
   firePoint: {fileID: 0}
@@ -301,6 +301,10 @@ MonoBehaviour:
   shootSound: {fileID: 0}
   emptySound: {fileID: 0}
   isAutomatic: 0
+  reloadTime: 4
+  reloadSound: {fileID: 8300000, guid: 28d5fdd5722b7334a91e44fe5ebf25a4, type: 3}
+  reserveAmmo: 60
+  showDebugAmmo: 1
   hitMask:
     serializedVersion: 2
     m_Bits: 4294967295

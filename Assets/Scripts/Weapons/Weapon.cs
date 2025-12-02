@@ -498,4 +498,13 @@ public class Weapon : MonoBehaviour
 
     public int GetCurrentAmmo() => currentAmmo;
     public int GetMaxAmmo() => maxAmmo;
+
+    /// <summary>
+    /// Add ammo to this weapon's reserve pool. Used by pickups and rewards.
+    /// </summary>
+    public void AddReserveAmmo(int amount)
+    {
+        if (amount <= 0) return;
+        reserveAmmo += amount;
+    }
 }
