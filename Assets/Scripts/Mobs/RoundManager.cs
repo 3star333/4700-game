@@ -1,5 +1,10 @@
 using System.Collections;
 using UnityEngine;
+using GothicShooter.Mobs;
+using GothicShooter.Health;
+using GothicShooter.Core;
+namespace GothicShooter.Mobs
+{
 
 /// <summary>
 /// Controls round progression, calculates how many zombies to spawn each round,
@@ -31,7 +36,15 @@ public class RoundManager : MonoBehaviour
         if (spawner == null)
             spawner = FindObjectOfType<ZombieSpawner>();
 
+        if (spawner != null)
+        {
+            spawner.OnWaveCompleted += HandleWaveCompleted;
+        }
+
         StartNextRound();
+        // Optionally notify game state manager
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsPlaying())
+            GameStateManager.Instance.TransitionToPlaying();
     }
 
     public void StartNextRound()
@@ -52,10 +65,38 @@ public class RoundManager : MonoBehaviour
             float damageScale = Mathf.Pow(damageMultiplierPerRound, currentRound - 1);
 
             spawner.StartWave(zombiesThisRound, healthScale, speedScale, damageScale);
+            if (GameStateManager.Instance != null)
+                GameStateManager.Instance.TransitionToWaveStarting();
+        }
+    }
+
+    private void HandleWaveCompleted()
+    {
+        // Transition game state to BetweenWaves if available
+        if (GameStateManager.Instance != null)
+        {
+            GameStateManager.Instance.TransitionToBetweenWaves();
+        }
+        // Start next round after small delay
+        StartCoroutine(NextRoundAfterDelay(4f));
+    }
+
+    private IEnumerator NextRoundAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StartNextRound();
+    }
+
+    private void OnDestroy()
+    {
+        if (spawner != null)
+        {
+            spawner.OnWaveCompleted -= HandleWaveCompleted;
         }
     }
 
     // Optional helper for UI
     public int GetCurrentRound() => currentRound;
     public int GetZombiesThisRound() => zombiesThisRound;
+}
 }

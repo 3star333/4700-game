@@ -1,9 +1,26 @@
 using UnityEngine;
 
-public class SawedOffShotgun : PumpShotgun
+/// <summary>
+/// Sawed-off shotgun with strong recoil that pushes player backward.
+/// </summary>
+public class SawedOffShotgun : Weapon
 {
     [Header("Sawed Off Settings")]
     public float recoilForce = 10f; // Strong pushback
+
+    public override void Start()
+    {
+        weaponName = "Sawed-Off Shotgun";
+        damage = 60f; // Lower damage per pellet than pump
+        fireRate = 0.6f; // Faster than pump
+        maxAmmo = 2; // Only 2 shells
+        isAutomatic = false;
+        range = 20f; // Very short range
+        pelletsPerShot = 10; // More pellets
+        spreadAngle = 15f; // Wide spread
+
+        base.Start();
+    }
 
     public override void Fire()
     {

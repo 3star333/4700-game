@@ -32,7 +32,7 @@ public class PackAPunch : MonoBehaviour, IInteractable
             return false;
         }
 
-        // Find the player's WeaponController and apply upgrade
+        // Find the player's Weapon and apply upgrade
         // Try WeaponManager first
         WeaponManager wm = interactor.GetComponent<WeaponManager>();
         if (wm != null)
@@ -52,7 +52,7 @@ public class PackAPunch : MonoBehaviour, IInteractable
             return true;
         }
 
-        Debug.LogWarning("Player has no WeaponController to upgrade.");
+        Debug.LogWarning("Player has no Weapon to upgrade.");
         return false;
     }
 
