@@ -2,54 +2,69 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager Instance;
+    public static AudioManager Instance { get; private set; }
 
     [Header("Audio Sources")]
-    public AudioSource sfxSource;   // For sound effects (guns, UI, hits)
-    public AudioSource musicSource; // For music / ambience
+    public AudioSource musicSource;     // for music if you add later
+    public AudioSource sfxSource;       // guns, monsters, footsteps
+    public AudioSource uiSource;        // UI clicks etc.
+    public AudioSource ambienceSource;  // wind / background
+
+    [Header("Ambience")]
+    public AudioClip nightAmbience;
+    public bool playAmbienceOnStart = true;
+
+    [Header("UI Clips")]
+    public AudioClip uiClick;
+    public AudioClip uiHover;
+    public AudioClip uiConfirm;
 
     private void Awake()
     {
-        // Simple singleton so we only ever have one AudioManager
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    // Play a one-shot sound effect
-    public void PlaySFX(AudioClip clip)
+    private void Start()
     {
-        if (clip != null && sfxSource != null)
+        if (playAmbienceOnStart && nightAmbience != null && ambienceSource != null)
         {
-            sfxSource.PlayOneShot(clip);
+            ambienceSource.loop = true;
+            ambienceSource.clip = nightAmbience;
+            ambienceSource.Play();
         }
     }
 
-    // Play background music or ambience
-    public void PlayMusic(AudioClip clip, bool loop = true)
+    // --------- SFX ---------
+    public void PlaySFX(AudioClip clip, float pitchRandomize = 0.04f)
     {
-        if (clip == null || musicSource == null) return;
+        if (clip == null || sfxSource == null) return;
 
-        // If it's already playing this clip, no need to restart it
-        if (musicSource.clip == clip) return;
+        float originalPitch = sfxSource.pitch;
 
-        musicSource.clip = clip;
-        musicSource.loop = loop;
-        musicSource.Play();
-    }
-
-    // Optional: stop music
-    public void StopMusic()
-    {
-        if (musicSource != null)
+        if (pitchRandomize > 0f)
         {
-            musicSource.Stop();
+            sfxSource.pitch = Random.Range(1f - pitchRandomize, 1f + pitchRandomize);
         }
+
+        sfxSource.PlayOneShot(clip);
+        sfxSource.pitch = originalPitch;
     }
+
+    // --------- UI ---------
+    public void PlayUISound(AudioClip clip)
+    {
+        if (clip == null || uiSource == null) return;
+        uiSource.PlayOneShot(clip);
+    }
+
+    public void PlayUIClick()   => PlayUISound(uiClick);
+    public void PlayUIHover()   => PlayUISound(uiHover);
+    public void PlayUIConfirm() => PlayUISound(uiConfirm);
 }

@@ -1,5 +1,19 @@
 using UnityEngine;
 
+private EnemyAudio enemyAudio;
+
+void Awake()
+{
+    enemyAudio = GetComponent<EnemyAudio>();
+}
+
+void DoAttack()
+{
+    // your existing damage code here...
+
+    enemyAudio?.PlayAttack();
+}
+
 public class ZombieAI : MonoBehaviour
 {
     public Transform player;          // Assigned dynamically
@@ -25,3 +39,4 @@ public class ZombieAI : MonoBehaviour
         }
     }
 }
+
